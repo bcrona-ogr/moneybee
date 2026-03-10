@@ -173,14 +173,24 @@ Important business protections:
 
 ---
 
+Tabii. Bunu daha net ve teknik şekilde şöyle yazabilirsin:
+
+---
+
 ## 3.4 API Gateway
 
-Responsible for:
+The API Gateway is implemented using [**YARP (Yet Another Reverse Proxy)**](https://github.com/dotnet/yarp).
 
-* single public entry point
-* forwarding requests to services
-* JWT validation at gateway level
-* route-based authorization
+It is responsible for:
+
+* providing a single public entry point for clients
+* forwarding incoming requests to the correct downstream service
+* validating JWT tokens at the gateway level
+* enforcing route-based authorization rules
+* centralizing cross-cutting concerns such as routing and access control
+
+The gateway acts as a reverse proxy in front of the internal services.
+Clients do not call Auth, Customer, or Transfer services directly. Instead, they send requests to the gateway, and YARP forwards those requests to the appropriate downstream service based on the configured route.
 
 Routing examples:
 
