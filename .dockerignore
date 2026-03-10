@@ -1,0 +1,14 @@
+﻿**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/.git/
+**/.gitignore
+**/TestResults/
+**/node_modules/
+**/*.user
+**/*.suo
+**/*.cache
+**/*.log
+docker-compose.override.yml
+README.md

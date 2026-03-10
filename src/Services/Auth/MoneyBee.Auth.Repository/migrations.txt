@@ -1,0 +1,5 @@
+dotnet ef migrations add InitialCreate `
+  --project .\src\Services\Auth\MoneyBee.Auth.Repository\MoneyBee.Auth.Repository.csproj `
+  --startup-project .\src\Services\Auth\MoneyBee.Auth.API\MoneyBee.Auth.API.csproj `
+  --context MoneyBee.Auth.Repository.Persistence.DbContexts.AuthDbContext `
+  --output-dir Persistence\Migrations

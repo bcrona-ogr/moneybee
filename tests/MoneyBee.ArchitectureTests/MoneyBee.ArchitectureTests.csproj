@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="8.8.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="NetArchTest.Rules" Version="1.3.2" />
+    <PackageReference Include="xunit" Version="2.8.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.0" />
+    <PackageReference Include="coverlet.collector" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Services\Auth\MoneyBee.Auth.API\MoneyBee.Auth.API.csproj" />
+    <ProjectReference Include="..\..\src\Services\Auth\MoneyBee.Auth.Application\MoneyBee.Auth.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Auth\MoneyBee.Auth.UseCase\MoneyBee.Auth.UseCase.csproj" />
+    <ProjectReference Include="..\..\src\Services\Auth\MoneyBee.Auth.Abstraction\MoneyBee.Auth.Abstraction.csproj" />
+    <ProjectReference Include="..\..\src\Services\Auth\MoneyBee.Auth.Repository\MoneyBee.Auth.Repository.csproj" />
+    <ProjectReference Include="..\..\src\Services\Auth\MoneyBee.Auth.Infrastructure\MoneyBee.Auth.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\Auth\MoneyBee.Auth.Domain\MoneyBee.Auth.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Shared\MoneyBee.Shared.Application\MoneyBee.Shared.Application.csproj" />
+    <ProjectReference Include="..\..\src\Shared\MoneyBee.Shared.Core\MoneyBee.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.API\MoneyBee.Customer.API.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.Application\MoneyBee.Customer.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.UseCase\MoneyBee.Customer.UseCase.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.Abstraction\MoneyBee.Customer.Abstraction.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.Repository\MoneyBee.Customer.Repository.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.Infrastructure\MoneyBee.Customer.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.Domain\MoneyBee.Customer.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\Transfer\MoneyBee.Transfer.API\MoneyBee.Transfer.API.csproj" />
+    <ProjectReference Include="..\..\src\Services\Transfer\MoneyBee.Transfer.Application\MoneyBee.Transfer.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Transfer\MoneyBee.Transfer.UseCase\MoneyBee.Transfer.UseCase.csproj" />
+    <ProjectReference Include="..\..\src\Services\Transfer\MoneyBee.Transfer.Abstraction\MoneyBee.Transfer.Abstraction.csproj" />
+    <ProjectReference Include="..\..\src\Services\Transfer\MoneyBee.Transfer.Repository\MoneyBee.Transfer.Repository.csproj" />
+    <ProjectReference Include="..\..\src\Services\Transfer\MoneyBee.Transfer.Infrastructure\MoneyBee.Transfer.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Services\Transfer\MoneyBee.Transfer.Domain\MoneyBee.Transfer.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

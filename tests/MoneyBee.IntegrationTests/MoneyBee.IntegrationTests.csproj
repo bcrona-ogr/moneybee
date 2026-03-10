@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="8.8.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.24" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
+    <PackageReference Include="xunit" Version="2.8.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.0" />
+    <PackageReference Include="coverlet.collector" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql" Version="9.0.3" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.5.0" />
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Shared\MoneyBee.Shared.API\MoneyBee.Shared.API.csproj" />
+    <ProjectReference Include="..\..\src\Services\Auth\MoneyBee.Auth.API\MoneyBee.Auth.API.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.API\MoneyBee.Customer.API.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.Application\MoneyBee.Customer.Application.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.UseCase\MoneyBee.Customer.UseCase.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.Abstraction\MoneyBee.Customer.Abstraction.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.Domain\MoneyBee.Customer.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Services\Customer\MoneyBee.Customer.Contracts\MoneyBee.Customer.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Services\Transfer\MoneyBee.Transfer.API\MoneyBee.Transfer.API.csproj" />
+    <ProjectReference Include="..\..\src\Gateways\MoneyBee.ApiGateway\MoneyBee.ApiGateway.csproj" />
+  </ItemGroup>
+
+</Project>

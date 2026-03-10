@@ -1,0 +1,6 @@
+@MoneyBee.ApiGateway_HostAddress = http://localhost:5017
+
+GET {{MoneyBee.ApiGateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

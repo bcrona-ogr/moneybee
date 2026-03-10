@@ -1,0 +1,2795 @@
+{
+  "info": {
+    "_postman_id": "8b1875fb-4c64-420b-953f-b0f3052285eb",
+    "name": "MoneyBee Scenarios",
+    "description": "Happy paths and edge cases with assertions.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "gatewayBaseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "authBaseUrl",
+      "value": "http://localhost:7001"
+    },
+    {
+      "key": "customerBaseUrl",
+      "value": "http://localhost:7002"
+    },
+    {
+      "key": "transferBaseUrl",
+      "value": "http://localhost:7003"
+    },
+    {
+      "key": "username",
+      "value": "admin"
+    },
+    {
+      "key": "password",
+      "value": "123456"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "customerId",
+      "value": ""
+    },
+    {
+      "key": "senderCustomerId",
+      "value": ""
+    },
+    {
+      "key": "receiverCustomerId",
+      "value": ""
+    },
+    {
+      "key": "transactionCode",
+      "value": ""
+    },
+    {
+      "key": "transactionCode2",
+      "value": ""
+    },
+    {
+      "key": "idempotencyKey",
+      "value": ""
+    },
+    {
+      "key": "fixedIdempotencyKeySame",
+      "value": ""
+    },
+    {
+      "key": "fixedIdempotencyKeyDiff",
+      "value": ""
+    },
+    {
+      "key": "missingSenderCustomerId",
+      "value": "11111111-1111-1111-1111-111111111111"
+    },
+    {
+      "key": "missingReceiverCustomerId",
+      "value": "22222222-2222-2222-2222-222222222222"
+    },
+    {
+      "key": "randomCustomerId",
+      "value": ""
+    },
+    {
+      "key": "customerIdentityNumber",
+      "value": ""
+    },
+    {
+      "key": "customerIdentityNumber2",
+      "value": ""
+    },
+    {
+      "key": "duplicateIdentityNumber",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Scenario - Transfer Happy Path",
+      "item": [
+        {
+          "name": "Auth - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/auth/login",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const seed = `${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 8)}`;",
+                  "const digits = seed.replace(/\\D/g, '').padEnd(20, '7');",
+                  "[",
+                  "  'customerId','senderCustomerId','receiverCustomerId','transactionCode','transactionCode2','idempotencyKey'",
+                  "].forEach(k => pm.collectionVariables.unset(k));",
+                  "pm.collectionVariables.set('customerIdentityNumber', `1${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('customerIdentityNumber2', `2${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('duplicateIdentityNumber', `3${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeySame', `idem-same-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeyDiff', `idem-diff-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('randomCustomerId', `cccccccc-cccc-cccc-cccc-${digits.slice(0,12)}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var token = j.accessToken || j.token || (j.data && (j.data.accessToken || j.data.token));",
+                  "pm.expect(token).to.exist;",
+                  "pm.collectionVariables.set('token', token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Sender",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ali\",\n  \"lastName\": \"Veli\",\n  \"phoneNumber\": \"5551112233\",\n  \"address\": \"Istanbul\",\n  \"dateOfBirth\": \"1990-01-01\",\n  \"identityNumber\": \"{{customerIdentityNumber}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('senderCustomerId', id);",
+                  "pm.collectionVariables.set('customerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Receiver",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ayse\",\n  \"lastName\": \"Demir\",\n  \"phoneNumber\": \"5559998877\",\n  \"address\": \"Ankara\",\n  \"dateOfBirth\": \"1992-02-02\",\n  \"identityNumber\": \"{{customerIdentityNumber2}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('receiverCustomerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transfer - Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let key = pm.collectionVariables.get('idempotencyKey');",
+                  "if (!key) {",
+                  "  key = `idem-${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 10)}`;",
+                  "  pm.collectionVariables.set('idempotencyKey', key);",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var code = j.transactionCode || (j.data && j.data.transactionCode);",
+                  "pm.expect(code).to.exist;",
+                  "pm.collectionVariables.set('transactionCode', code);",
+                  "pm.collectionVariables.unset('idempotencyKey');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transfer - Get By Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/by-code/{{transactionCode}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "by-code",
+                "{{transactionCode}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transfer - Complete",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transactionCode}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transfer - History (Sender)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/history?customerId={{senderCustomerId}}&role=sender",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{senderCustomerId}}"
+                },
+                {
+                  "key": "role",
+                  "value": "sender"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Edge Cases - Customer",
+      "item": [
+        {
+          "name": "Auth - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/auth/login",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const seed = `${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 8)}`;",
+                  "const digits = seed.replace(/\\D/g, '').padEnd(20, '7');",
+                  "[",
+                  "  'customerId','senderCustomerId','receiverCustomerId','transactionCode','transactionCode2','idempotencyKey'",
+                  "].forEach(k => pm.collectionVariables.unset(k));",
+                  "pm.collectionVariables.set('customerIdentityNumber', `1${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('customerIdentityNumber2', `2${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('duplicateIdentityNumber', `3${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeySame', `idem-same-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeyDiff', `idem-diff-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('randomCustomerId', `cccccccc-cccc-cccc-cccc-${digits.slice(0,12)}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var token = j.accessToken || j.token || (j.data && (j.data.accessToken || j.data.token));",
+                  "pm.expect(token).to.exist;",
+                  "pm.collectionVariables.set('token', token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Customer - Unauthorized",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Mehmet\",\n  \"lastName\": \"Yilmaz\",\n  \"phoneNumber\": \"5553334455\",\n  \"address\": \"Izmir\",\n  \"dateOfBirth\": \"1993-03-03\",\n  \"identityNumber\": \"{{customerIdentityNumber}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function(){ pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Customer - Invalid Body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"\",\n  \"phoneNumber\": \"\",\n  \"address\": \"\",\n  \"dateOfBirth\": \"2999-01-01\",\n  \"identityNumber\": \"\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', function(){ pm.expect(pm.response.code).to.eql(422); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Sender",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ali\",\n  \"lastName\": \"Veli\",\n  \"phoneNumber\": \"5551112233\",\n  \"address\": \"Istanbul\",\n  \"dateOfBirth\": \"1990-01-01\",\n  \"identityNumber\": \"{{duplicateIdentityNumber}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('senderCustomerId', id);",
+                  "pm.collectionVariables.set('customerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Customer - Duplicate Identity Number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Other\",\n  \"lastName\": \"User\",\n  \"phoneNumber\": \"5559999999\",\n  \"address\": \"Bursa\",\n  \"dateOfBirth\": \"1991-01-01\",\n  \"identityNumber\": \"{{duplicateIdentityNumber}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Customer - Existing",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers/{{senderCustomerId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers",
+                "{{senderCustomerId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Customer - Not Found",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers/{{randomCustomerId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers",
+                "{{randomCustomerId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Customers - Match",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers?query=Ali",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "Ali"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Customer - Existing",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers/{{senderCustomerId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers",
+                "{{senderCustomerId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"AliUpdated\",\n  \"lastName\": \"VeliUpdated\",\n  \"phoneNumber\": \"5550001111\",\n  \"address\": \"Updated Address\",\n  \"dateOfBirth\": \"1989-09-09\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Customer - Existing",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers/{{senderCustomerId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers",
+                "{{senderCustomerId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', function(){ pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Customer - Not Found",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers/{{randomCustomerId}}",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers",
+                "{{randomCustomerId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Edge Cases - Transfer",
+      "item": [
+        {
+          "name": "Auth - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/auth/login",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const seed = `${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 8)}`;",
+                  "const digits = seed.replace(/\\D/g, '').padEnd(20, '7');",
+                  "[",
+                  "  'customerId','senderCustomerId','receiverCustomerId','transactionCode','transactionCode2','idempotencyKey'",
+                  "].forEach(k => pm.collectionVariables.unset(k));",
+                  "pm.collectionVariables.set('customerIdentityNumber', `1${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('customerIdentityNumber2', `2${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('duplicateIdentityNumber', `3${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeySame', `idem-same-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeyDiff', `idem-diff-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('randomCustomerId', `cccccccc-cccc-cccc-cccc-${digits.slice(0,12)}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var token = j.accessToken || j.token || (j.data && (j.data.accessToken || j.data.token));",
+                  "pm.expect(token).to.exist;",
+                  "pm.collectionVariables.set('token', token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Sender",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ali\",\n  \"lastName\": \"Veli\",\n  \"phoneNumber\": \"5551112233\",\n  \"address\": \"Istanbul\",\n  \"dateOfBirth\": \"1990-01-01\",\n  \"identityNumber\": \"{{customerIdentityNumber}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('senderCustomerId', id);",
+                  "pm.collectionVariables.set('customerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Receiver",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ayse\",\n  \"lastName\": \"Demir\",\n  \"phoneNumber\": \"5559998877\",\n  \"address\": \"Ankara\",\n  \"dateOfBirth\": \"1992-02-02\",\n  \"identityNumber\": \"{{customerIdentityNumber2}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('receiverCustomerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Unauthorized",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "edge-unauthorized-{{fixedIdempotencyKeySame}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401', function(){ pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Invalid Body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "edge-invalid-{{fixedIdempotencyKeySame}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"receiverCustomerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"amount\": 0\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 422', function(){ pm.expect(pm.response.code).to.eql(422); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Sender Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "edge-sender-{{fixedIdempotencyKeySame}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{missingSenderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Receiver Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "edge-receiver-{{fixedIdempotencyKeySame}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{missingReceiverCustomerId}}\",\n  \"amount\": 500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Same Sender Receiver",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "edge-same-{{fixedIdempotencyKeySame}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{senderCustomerId}}\",\n  \"amount\": 500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Negative Amount",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "edge-negative-{{fixedIdempotencyKeySame}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": -10\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 or 422', function(){ pm.expect([400,422]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Daily Limit Exceeded",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "edge-limit-{{fixedIdempotencyKeySame}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 150000\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Auto Idempotency Key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let key = pm.collectionVariables.get('idempotencyKey');",
+                  "if (!key) {",
+                  "  key = `idem-${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 10)}`;",
+                  "  pm.collectionVariables.set('idempotencyKey', key);",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var code = j.transactionCode || (j.data && j.data.transactionCode);",
+                  "pm.expect(code).to.exist;",
+                  "pm.collectionVariables.set('transactionCode', code);",
+                  "pm.collectionVariables.unset('idempotencyKey');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GetByCode - Not Found",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/by-code/TRX-NOT-FOUND",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "by-code",
+                "TRX-NOT-FOUND"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete - Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"TRX-NOT-FOUND\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete - Receiver Mismatch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transactionCode}}\",\n  \"receiverCustomerId\": \"{{randomCustomerId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel - Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/cancel",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "cancel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"TRX-NOT-FOUND\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404', function(){ pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "History - Empty Sender",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/history?customerId={{randomCustomerId}}&role=sender",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{randomCustomerId}}"
+                },
+                {
+                  "key": "role",
+                  "value": "sender"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Scenario - Transfer Idempotency",
+      "item": [
+        {
+          "name": "Auth - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/auth/login",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const seed = `${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 8)}`;",
+                  "const digits = seed.replace(/\\D/g, '').padEnd(20, '7');",
+                  "[",
+                  "  'customerId','senderCustomerId','receiverCustomerId','transactionCode','transactionCode2','idempotencyKey'",
+                  "].forEach(k => pm.collectionVariables.unset(k));",
+                  "pm.collectionVariables.set('customerIdentityNumber', `1${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('customerIdentityNumber2', `2${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('duplicateIdentityNumber', `3${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeySame', `idem-same-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeyDiff', `idem-diff-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('randomCustomerId', `cccccccc-cccc-cccc-cccc-${digits.slice(0,12)}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var token = j.accessToken || j.token || (j.data && (j.data.accessToken || j.data.token));",
+                  "pm.expect(token).to.exist;",
+                  "pm.collectionVariables.set('token', token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Sender",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ali\",\n  \"lastName\": \"Veli\",\n  \"phoneNumber\": \"5551112233\",\n  \"address\": \"Istanbul\",\n  \"dateOfBirth\": \"1990-01-01\",\n  \"identityNumber\": \"{{customerIdentityNumber}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('senderCustomerId', id);",
+                  "pm.collectionVariables.set('customerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Receiver",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ayse\",\n  \"lastName\": \"Demir\",\n  \"phoneNumber\": \"5559998877\",\n  \"address\": \"Ankara\",\n  \"dateOfBirth\": \"1992-02-02\",\n  \"identityNumber\": \"{{customerIdentityNumber2}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('receiverCustomerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Same Key Same Payload (1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{fixedIdempotencyKeySame}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Same Key Same Payload (2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{fixedIdempotencyKeySame}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Same Key Different Payload (1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{fixedIdempotencyKeyDiff}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 500\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create - Same Key Different Payload (2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{fixedIdempotencyKeyDiff}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 700\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409', function(){ pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Scenario - Transfer Already Completed / Completed Cancel Rules",
+      "item": [
+        {
+          "name": "Auth - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/auth/login",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const seed = `${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 8)}`;",
+                  "const digits = seed.replace(/\\D/g, '').padEnd(20, '7');",
+                  "[",
+                  "  'customerId','senderCustomerId','receiverCustomerId','transactionCode','transactionCode2','idempotencyKey'",
+                  "].forEach(k => pm.collectionVariables.unset(k));",
+                  "pm.collectionVariables.set('customerIdentityNumber', `1${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('customerIdentityNumber2', `2${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('duplicateIdentityNumber', `3${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeySame', `idem-same-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeyDiff', `idem-diff-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('randomCustomerId', `cccccccc-cccc-cccc-cccc-${digits.slice(0,12)}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var token = j.accessToken || j.token || (j.data && (j.data.accessToken || j.data.token));",
+                  "pm.expect(token).to.exist;",
+                  "pm.collectionVariables.set('token', token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Sender",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ali\",\n  \"lastName\": \"Veli\",\n  \"phoneNumber\": \"5551112233\",\n  \"address\": \"Istanbul\",\n  \"dateOfBirth\": \"1990-01-01\",\n  \"identityNumber\": \"{{customerIdentityNumber}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('senderCustomerId', id);",
+                  "pm.collectionVariables.set('customerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Receiver",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ayse\",\n  \"lastName\": \"Demir\",\n  \"phoneNumber\": \"5559998877\",\n  \"address\": \"Ankara\",\n  \"dateOfBirth\": \"1992-02-02\",\n  \"identityNumber\": \"{{customerIdentityNumber2}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('receiverCustomerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transfer - Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 250\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let key = pm.collectionVariables.get('idempotencyKey');",
+                  "if (!key) {",
+                  "  key = `idem-${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 10)}`;",
+                  "  pm.collectionVariables.set('idempotencyKey', key);",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var code = j.transactionCode || (j.data && j.data.transactionCode);",
+                  "pm.expect(code).to.exist;",
+                  "pm.collectionVariables.set('transactionCode', code);",
+                  "pm.collectionVariables.unset('idempotencyKey');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete - First Time",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transactionCode}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete - Already Completed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transactionCode}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel - Cannot Cancel Completed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/cancel",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "cancel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transactionCode}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Scenario - Transfer Cancelled / Cannot Complete Cancelled",
+      "item": [
+        {
+          "name": "Auth - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/auth/login",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const seed = `${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 8)}`;",
+                  "const digits = seed.replace(/\\D/g, '').padEnd(20, '7');",
+                  "[",
+                  "  'customerId','senderCustomerId','receiverCustomerId','transactionCode','transactionCode2','idempotencyKey'",
+                  "].forEach(k => pm.collectionVariables.unset(k));",
+                  "pm.collectionVariables.set('customerIdentityNumber', `1${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('customerIdentityNumber2', `2${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('duplicateIdentityNumber', `3${digits.slice(0,10)}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeySame', `idem-same-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('fixedIdempotencyKeyDiff', `idem-diff-${pm.info.iteration}-${Date.now()}`);",
+                  "pm.collectionVariables.set('randomCustomerId', `cccccccc-cccc-cccc-cccc-${digits.slice(0,12)}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var token = j.accessToken || j.token || (j.data && (j.data.accessToken || j.data.token));",
+                  "pm.expect(token).to.exist;",
+                  "pm.collectionVariables.set('token', token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Sender",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ali\",\n  \"lastName\": \"Veli\",\n  \"phoneNumber\": \"5551112233\",\n  \"address\": \"Istanbul\",\n  \"dateOfBirth\": \"1990-01-01\",\n  \"identityNumber\": \"{{customerIdentityNumber}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('senderCustomerId', id);",
+                  "pm.collectionVariables.set('customerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer - Create Receiver",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/customers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "customers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ayse\",\n  \"lastName\": \"Demir\",\n  \"phoneNumber\": \"5559998877\",\n  \"address\": \"Ankara\",\n  \"dateOfBirth\": \"1992-02-02\",\n  \"identityNumber\": \"{{customerIdentityNumber2}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var id = j.id || (j.data && j.data.id);",
+                  "pm.expect(id).to.exist;",
+                  "pm.collectionVariables.set('receiverCustomerId', id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Transfer - Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senderCustomerId\": \"{{senderCustomerId}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\",\n  \"amount\": 260\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let key = pm.collectionVariables.get('idempotencyKey');",
+                  "if (!key) {",
+                  "  key = `idem-${Date.now()}-${pm.info.iteration}-${Math.random().toString(36).slice(2, 10)}`;",
+                  "  pm.collectionVariables.set('idempotencyKey', key);",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "var code = j.transactionCode || (j.data && j.data.transactionCode);",
+                  "pm.expect(code).to.exist;",
+                  "pm.collectionVariables.set('transactionCode2', code);",
+                  "pm.collectionVariables.unset('idempotencyKey');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel - First Time",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/cancel",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "cancel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transactionCode2}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function(){ pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel - Already Cancelled",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/cancel",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "cancel"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transactionCode2}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete - Cannot Complete Cancelled",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/gateway/api/transfers/complete",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "gateway",
+                "api",
+                "transfers",
+                "complete"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionCode\": \"{{transactionCode2}}\",\n  \"receiverCustomerId\": \"{{receiverCustomerId}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400', function(){ pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Direct Services",
+      "item": [
+        {
+          "name": "Auth API - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{authBaseUrl}}/api/auth/login",
+              "host": [
+                "{{authBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 or 400', function(){ pm.expect([200,400]).to.include(pm.response.code); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer API - Get By Id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{customerBaseUrl}}/api/customers/{{customerId}}",
+              "host": [
+                "{{customerBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "{{customerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transfer API - Get By Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{transferBaseUrl}}/api/transfers/by-code/{{transactionCode}}",
+              "host": [
+                "{{transferBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "transfers",
+                "by-code",
+                "{{transactionCode}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

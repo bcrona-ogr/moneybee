@@ -1,0 +1,104 @@
+﻿version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: moneybee-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: moneybee
+    ports:
+      - "5432:5432"
+    volumes:
+      - moneybee-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  auth-api:
+    build:
+      context: .
+      dockerfile: src/Services/Auth/MoneyBee.Auth.API/Dockerfile
+    container_name: moneybee-auth-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__AuthDb: Host=postgres;Port=5432;Database=moneybee_auth_db;Username=postgres;Password=postgres
+      Jwt__Issuer: MoneyBee.Auth
+      Jwt__Audience: MoneyBee.Services
+      Jwt__SecretKey: MoneyBee_Local_Dev_HS256_Key_2026_X9mP4qR7tV2wY8zK5nL1cD6sF3hJ0
+      Jwt__AccessTokenExpirationMinutes: 60
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "7001:8080"
+
+  customer-api:
+    build:
+      context: .
+      dockerfile: src/Services/Customer/MoneyBee.Customer.API/Dockerfile
+    container_name: moneybee-customer-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__CustomerDb: Host=postgres;Port=5432;Database=moneybee_customer_db;Username=postgres;Password=postgres
+      Jwt__Issuer: MoneyBee.Auth
+      Jwt__Audience: MoneyBee.Services
+      Jwt__SecretKey: MoneyBee_Local_Dev_HS256_Key_2026_X9mP4qR7tV2wY8zK5nL1cD6sF3hJ0
+      Jwt__AccessTokenExpirationMinutes: 60
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "7002:8080"
+
+  transfer-api:
+    build:
+      context: .
+      dockerfile: src/Services/Transfer/MoneyBee.Transfer.API/Dockerfile
+    container_name: moneybee-transfer-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__TransferDb: Host=postgres;Port=5432;Database=moneybee_transfer_db;Username=postgres;Password=postgres
+      Jwt__Issuer: MoneyBee.Auth
+      Jwt__Audience: MoneyBee.Services
+      Jwt__SecretKey: MoneyBee_Local_Dev_HS256_Key_2026_X9mP4qR7tV2wY8zK5nL1cD6sF3hJ0
+      Jwt__AccessTokenExpirationMinutes: 60
+      CustomerService__BaseUrl: http://customer-api:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      customer-api:
+        condition: service_started
+    ports:
+      - "7003:8080"
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/Gateways/MoneyBee.ApiGateway/Dockerfile
+    container_name: moneybee-api-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Jwt__Issuer: MoneyBee.Auth
+      Jwt__Audience: MoneyBee.Services
+      Jwt__SecretKey: MoneyBee_Local_Dev_HS256_Key_2026_X9mP4qR7tV2wY8zK5nL1cD6sF3hJ0
+      Jwt__AccessTokenExpirationMinutes: 60
+
+      ReverseProxy__Clusters__auth-cluster__Destinations__d1__Address: http://auth-api:8080/
+      ReverseProxy__Clusters__customer-cluster__Destinations__d1__Address: http://customer-api:8080/
+      ReverseProxy__Clusters__transfer-cluster__Destinations__d1__Address: http://transfer-api:8080/
+    depends_on:
+      auth-api:
+        condition: service_started
+      customer-api:
+        condition: service_started
+      transfer-api:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+volumes:
+  moneybee-postgres-data:

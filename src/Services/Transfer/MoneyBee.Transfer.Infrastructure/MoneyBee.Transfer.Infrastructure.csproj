@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <ItemGroup>
+        <ProjectReference Include="..\MoneyBee.Transfer.Abstraction\MoneyBee.Transfer.Abstraction.csproj"/>
+        <ProjectReference Include="..\MoneyBee.Transfer.Contracts\MoneyBee.Transfer.Contracts.csproj"/>
+        <ProjectReference Include="..\MoneyBee.Transfer.Domain\MoneyBee.Transfer.Domain.csproj"/>
+        <ProjectReference Include="..\..\..\Shared\MoneyBee.Shared.Core\MoneyBee.Shared.Core.csproj" />
+        <ProjectReference Include="..\..\..\Shared\MoneyBee.Shared.Application\MoneyBee.Shared.Application.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9"/>
+        <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.3"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+    </PropertyGroup>
+
+</Project>

@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MoneyBee.Auth.Infrastructure\MoneyBee.Auth.Infrastructure.csproj" />
+    <ProjectReference Include="..\MoneyBee.Auth.Repository\MoneyBee.Auth.Repository.csproj" />
+    <ProjectReference Include="..\MoneyBee.Auth.UseCase\MoneyBee.Auth.UseCase.csproj" />
+    <ProjectReference Include="..\MoneyBee.Auth.Abstraction\MoneyBee.Auth.Abstraction.csproj" />
+    <ProjectReference Include="..\MoneyBee.Auth.Domain\MoneyBee.Auth.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Shared\MoneyBee.Shared.Core\MoneyBee.Shared.Core.csproj" />
+    <ProjectReference Include="..\..\..\Shared\MoneyBee.Shared.Application\MoneyBee.Shared.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+</Project>

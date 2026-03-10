@@ -1,0 +1,6 @@
+@MoneyBee.Transfer.API_HostAddress = http://localhost:5005
+
+GET {{MoneyBee.Transfer.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
