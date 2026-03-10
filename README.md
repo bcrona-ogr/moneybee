@@ -756,7 +756,7 @@ Integration coverage includes:
 * API authentication and authorization behavior
 * idempotency and transaction lifecycle flows
 
-Integration tests use Testcontainers-based PostgreSQL instances and are designed to exercise real infrastructure rather than mocks wherever practical.
+Integration tests use [Testcontainers-based](https://github.com/testcontainers/testcontainers-dotnet) PostgreSQL instances and are designed to exercise real infrastructure rather than mocks wherever practical.
 
 At the service level, the following test boundaries apply:
 
