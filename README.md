@@ -807,7 +807,7 @@ They are intended for:
 * end-to-end scenario execution
 * regression checks for happy paths and edge cases
 
-The repository includes Postman collections and environment files for validating both happy paths and error paths across the MoneyBee services.
+The repository includes Postman [collections and environment files](https://github.com/bcrona-ogr/moneybee/tree/main/tests/postman) for validating both happy paths and error paths across the MoneyBee services.
 
 #### Available Collections
 
