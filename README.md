@@ -966,3 +966,89 @@ This separation helps keep the test strategy both fast and reliable:
 * Postman scenarios validate complete consumer journeys
 
 ---
+
+## 19. Future Development
+
+The current solution establishes a solid foundation for authentication, customer management, money transfer operations, gateway routing, automated testing, and scenario-based validation.
+Future improvements may focus on strengthening scalability, security, observability, and operational maturity.
+
+### 19.1 Service-to-Service Security
+
+The current architecture can be extended with stronger service-to-service authentication and authorization.
+
+Potential improvements include:
+
+* dedicated internal service tokens
+* service identity validation between internal APIs
+* internal-only endpoints for inter-service communication
+* stricter policies for internal versus external routes
+
+This would reduce reliance on forwarded user tokens and provide clearer boundaries between public API access and internal service communication.
+
+### 19.2 Background Processing and Outbox Support
+
+Transfer-related workflows may later benefit from asynchronous processing patterns.
+
+Possible additions:
+
+* outbox pattern for reliable event publishing
+* background job processing for non-blocking tasks
+* audit/event emission after transfer state changes
+* notification flows for completed or cancelled transfers
+
+### 19.3 Observability and Monitoring
+
+The platform can be enhanced with stronger operational visibility.
+
+Planned or possible improvements:
+
+* structured distributed logging
+* correlation ID propagation across all services
+* OpenTelemetry tracing
+* Prometheus-compatible metrics
+* health dashboards and alerting
+* gateway and downstream latency monitoring
+
+### 19.4 Resilience Improvements
+
+* retry policies for transient HTTP failures
+* circuit breakers for downstream dependencies
+* timeout policies
+* fallback strategies where applicable
+* better handling for partial dependency outages
+
+### 19.5 Caching Strategy Expansion
+
+Caching is currently positioned as an application concern and can be expanded further in a controlled way.
+
+Potential directions:
+
+* read-model caching for customer and transfer lookup endpoints
+* distributed cache support for scaled deployments
+* cache invalidation policies for update/delete operations
+* response caching for safe read-only gateway scenarios where appropriate
+
+
+### 19.6 Advanced Idempotency and Concurrency Controls
+
+The current implementation can be extended with stronger protections around repeated or concurrent requests.
+
+Possible improvements:
+
+* persistent idempotency storage policies with retention strategy
+* better replay response standardization
+* stronger concurrency protection for transfer lifecycle transitions
+* database-backed optimistic or pessimistic coordination where required
+* clearer error contracts for concurrent state modification attempts
+
+### 19.7 Production Hardening
+
+Before production-scale adoption, the platform may be further hardened through:
+
+* stricter secret management
+* environment-specific configuration isolation
+* stronger gateway policies
+* request throttling and rate limiting
+* improved container health checks
+
+---
